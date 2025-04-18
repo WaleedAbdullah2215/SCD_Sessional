@@ -1,0 +1,91 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:5.0
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: Waleed123@
+
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "3000:3000"
+    environment:
+      - MENU_SERVICES_URL=http://menu-service:3001
+      - ORDER_SERVICES_URL=http://order-service:3002
+      - INVENTORY_SERVICES_URL=http://inventory-service:3003
+      - CUSTOMER_SERVICES_URL=http://customer-service:3004
+      - PAYMENT_SERVICES_URL=http://payment-service:3005
+    depends_on:
+      - menu-services
+      - order-services
+      - inventory-services
+      - customer-services
+      - payment-services
+
+  menu-services:
+    build: ./menu-services
+    ports:
+      - "3001:3001"
+    environment:
+      - MONGODB_URI=mongodb://root:Waleed123%40@mongodb:27017
+      - PORT=3001
+    depends_on:
+      - mongodb
+
+  order-services:
+    build: ./order-services
+    ports:
+      - "3002:3002"
+    environment:
+      - MONGODB_URI=mongodb://root:Waleed123%40@mongodb:27017
+      - PORT=3002
+      - MENU_SERVICE_URL=http://menu-service:3001
+      - CUSTOMER_SERVICE_URL=http://customer-service:3004
+      - INVENTORY_SERVICE_URL=http://inventory-service:3003
+    depends_on:
+      - mongodb
+      - menu-services
+      - customer-services
+
+  inventory-services:
+    build: ./inventory-services
+    ports:
+      - "3003:3003"
+    environment:
+      - MONGODB_URI=mongodb://root:Waleed123%40@mongodb:27017
+      - PORT=3003
+    depends_on:
+      - mongodb
+
+  customer-services:
+    build: ./customer-services
+    ports:
+      - "3004:3004"
+    environment:
+      - MONGODB_URI=mongodb://root:Waleed123%40@mongodb:27017
+      - PORT=3004
+    depends_on:
+      - mongodb
+
+  payment-services:
+    build: ./payment-services
+    ports:
+      - "3005:3005"
+    environment:
+      - MONGODB_URI=mongodb://root:Waleed123%40@mongodb:27017
+      - PORT=3005
+      - ORDER_SERVICE_URL=http://order-service:3002
+      - CUSTOMER_SERVICE_URL=http://customer-service:3004
+    depends_on:
+      - mongodb
+      - order-services
+
+volumes:
+  mongodb_data:
